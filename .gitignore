@@ -1,0 +1,7 @@
+# package directories
+.git
+node_modules
+jspm_packages
+
+# Serverless directories
+.serverless

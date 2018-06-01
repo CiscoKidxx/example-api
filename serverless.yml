@@ -1,0 +1,66 @@
+service: example-api
+
+frameworkVersion: ">=1.1.0 <2.0.0"
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: dev
+  region: us-east-1
+  timeout: 60
+  environment:
+    EXAMPLE_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:BatchWriteItem
+      Resource: "*"
+
+functions:
+  getOneItem:
+    handler: api/handler.getOneItem
+    memorySize: 128
+    description: Find and return row information based on last_name.
+    events:
+      - http:
+          path: getOneItem/{phoneNumber}
+          method: get
+  postOneItem:
+    handler: api/handler.postOneItem
+    memorySize: 128
+    description: Add a row with data within POST body.
+    events:
+      - http:
+          path: postOneItem
+          method: post
+  getAllItems:
+    handler: api/handler.getAllItems
+    memorySize: 128
+    description: Get all rows in dynamoDb.
+    events:
+      - http:
+          path: getAllItems
+          method: get
+
+resources:
+  Resources:
+    exampleDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: "callcenterNumber"
+            AttributeType: "S"
+        KeySchema:
+          - AttributeName: "callcenterNumber"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: ${self:provider.environment.EXAMPLE_TABLE}
